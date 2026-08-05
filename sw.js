@@ -20,6 +20,7 @@ const CACHE_FIRST_ASSETS = [
   "./icons/apple-touch-icon.png",
   "./icons/flower-mark.png",
   "./icons/logo-mark.png",
+  "./icons/fermood-icon.png",
   "./icons/stickers/sticker-grumpy.png",
   "./icons/stickers/sticker-painter.png",
   "./icons/stickers/sticker-party.png",
