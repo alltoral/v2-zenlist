@@ -234,7 +234,7 @@ body.sidebar-collapsed .sidebar{
 .column-menu-btn{ flex:0 0 auto; }
 
 .column-cards{
-  flex:1; overflow-y:auto; padding: 40px 10px 6px;
+  flex:1; overflow-y:auto; overflow-x:hidden; padding: 26px 10px 6px;
   display:flex; flex-direction:column; gap:7px;
   min-height:24px;
 }
@@ -289,7 +289,7 @@ body.sidebar-collapsed .sidebar{
 .card:hover{ box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
 .card.dragging{ opacity:.4; }
 .card-title{ font-size:13.5px; font-weight:600; line-height:1.3; margin:0 0 3px; word-break:break-word; }
-.card.has-stickers .card-title{ padding-right:96px; }
+.card.has-stickers .card-title{ padding-right:70px; }
 .card-desc{ font-size:12px; color: var(--ink-soft); margin:0 0 6px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .card-meta{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .card-due{
@@ -435,11 +435,11 @@ body.sidebar-collapsed .sidebar{
 .sticker-thumb.selected{ border-color: var(--accent); background: var(--accent-tint); }
 
 .card-stickers{
-  position:absolute; top:-40px; right:-18px;
+  position:absolute; top:-24px; right:-8px;
   display:flex; z-index:4;
 }
 .card-sticker{
-  width:114px; height:114px; object-fit:contain; margin-left:-42px;
+  width:76px; height:76px; object-fit:contain; margin-left:-26px;
   cursor:pointer; filter: drop-shadow(0 3px 6px rgba(20,20,20,.28));
   transition: transform .12s ease;
 }
