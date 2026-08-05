@@ -127,6 +127,11 @@ button { font-family: inherit; }
   display:flex; flex-direction:column;
   overflow-y:auto;
   z-index:25;
+  transition: width .18s ease, opacity .12s ease, border-color .18s ease;
+}
+body.sidebar-collapsed .sidebar{
+  width:0; min-width:0; opacity:0; overflow:hidden;
+  border-right-color: transparent;
 }
 .sidebar-head{
   display:flex; align-items:center; justify-content:space-between;
@@ -134,6 +139,7 @@ button { font-family: inherit; }
   font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
   color: var(--ink-faint);
 }
+.sidebar-head-actions{ display:flex; align-items:center; gap:2px; }
 .project-list{ display:flex; flex-direction:column; gap:2px; padding: 4px 8px 14px; }
 
 .project-item{
@@ -516,9 +522,14 @@ button { font-family: inherit; }
    RESPONSIVE
    ========================================================= */
 .only-mobile{ display:none; }
+.only-desktop{ display:inline-flex; }
+
+#btnExpandSidebar{ color: var(--ink-soft); }
+#btnExpandSidebar:hover{ color: var(--ink); background: var(--surface-2); }
 
 @media (max-width: 860px){
   .only-mobile{ display:inline-flex; }
+  .only-desktop{ display:none; }
   .sidebar{
     position:fixed; top:var(--topbar-h); left:0; bottom:0;
     transform: translateX(-100%);
@@ -526,6 +537,7 @@ button { font-family: inherit; }
     box-shadow: var(--shadow-pop);
   }
   .sidebar.open{ transform:none; }
+  body.sidebar-collapsed .sidebar{ width:var(--sidebar-w); opacity:1; overflow-y:auto; border-right-color:var(--border); }
   .topbar-project{ font-size:12px; }
   .board{ padding:12px; scroll-snap-type: x mandatory; }
   .column{ width:82vw; flex:0 0 82vw; }
