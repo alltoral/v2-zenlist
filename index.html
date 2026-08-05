@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZenList – Lucas Neon</title>
+<meta name="description" content="ZenList – gestão de demandas por projeto, com quadros, cards e checklist.">
+<meta name="theme-color" content="#3A6604">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZenList">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <img class="auth-logo" src="icons/icon-192.png" alt="">
+    <h1 class="auth-title">ZenList</h1>
+    <p class="auth-tagline">um app para o Lucas Neon</p>
+
+    <div id="authError" class="auth-error" hidden></div>
+
+    <form id="authForm">
+      <label class="field-label" for="authEmail">E-mail</label>
+      <input id="authEmail" class="text-input" type="email" required autocomplete="email" placeholder="voce@email.com">
+
+      <label class="field-label" for="authPassword">Senha</label>
+      <input id="authPassword" class="text-input" type="password" required autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres">
+
+      <button type="submit" class="btn-primary auth-submit" id="authSubmitBtn">Entrar</button>
+    </form>
+
+    <div class="auth-switch">
+      <span id="authSwitchText">Ainda não tem conta?</span>
+      <button id="authSwitchBtn" class="auth-link" type="button">Criar conta</button>
+    </div>
+    <button id="authForgotBtn" class="auth-link auth-forgot" type="button">Esqueci minha senha</button>
+  </div>
+</div>
+
+<div id="app" hidden>
+
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar">
+    <button id="menuToggle" class="icon-btn only-mobile" aria-label="Abrir projetos" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="brand">
+      <img class="brand-mark" src="icons/flower-mark.png" alt="" aria-hidden="true">
+      <span class="brand-name">ZenList</span>
+    </div>
+    <div class="topbar-project">
+      <span id="currentProjectLabel">um app para o Lucas Neon</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="syncStatus" class="sync-status" title="Sincronizado com a nuvem">
+        <span class="sync-dot"></span><span class="sync-status-text">Sincronizado</span>
+      </span>
+      <button id="btnStickers" class="icon-btn" title="FerMood" aria-label="FerMood">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h9a2 2 0 0 1 2 2v9l-6 7H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M18 14h-4a2 2 0 0 0-2 2v5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="btnExport" class="icon-btn" title="Exportar backup" aria-label="Exportar backup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="btnImport" class="icon-btn" title="Importar backup" aria-label="Importar backup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 0l-4 4m4-4l4 4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <button id="btnAccount" class="icon-btn" title="Conta" aria-label="Conta">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="currentColor" stroke-width="2"/><path d="M4 20c1.5-3.5 4.8-5.5 8-5.5s6.5 2 8 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button id="btnInstall" class="btn-install" hidden>Instalar app</button>
+    </div>
+  </header>
+
+  <div class="body-shell">
+
+    <!-- ===== SIDEBAR / PROJECTS ===== -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <span>Projetos</span>
+        <button id="btnAddProject" class="icon-btn small" title="Novo projeto" aria-label="Novo projeto">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <nav id="projectList" class="project-list"></nav>
+      <div class="sidebar-empty" id="sidebarEmpty" hidden>
+        <p>Nenhum projeto ainda.</p>
+        <button class="btn-primary btn-small" id="btnAddProjectEmpty">Criar projeto</button>
+      </div>
+    </aside>
+    <div id="sidebarScrim" class="sidebar-scrim only-mobile" hidden></div>
+
+    <!-- ===== BOARD ===== -->
+    <main class="board-wrap">
+      <img class="board-watermark" src="icons/logo-mark.png" alt="" aria-hidden="true">
+      <div id="boardEmpty" class="board-empty" hidden>
+        <div class="board-empty-art" aria-hidden="true">
+          <img src="icons/flower-mark.png" alt="" style="width:64px;height:auto;">
+        </div>
+        <h2>Crie seu primeiro projeto</h2>
+        <p>Cada projeto tem seu próprio quadro, com colunas e cards que você define.</p>
+        <button class="btn-primary" id="btnAddProjectMain">Novo projeto</button>
+      </div>
+
+      <div id="board" class="board" hidden></div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== MODAL: card ===== -->
+<div id="cardModal" class="modal-overlay" hidden>
+  <div class="modal card-modal" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle">
+    <div class="modal-head">
+      <h3 id="cardModalTitle">Novo card</h3>
+      <button class="icon-btn" id="cardModalClose" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label" for="cardTitle">Título</label>
+      <input id="cardTitle" class="text-input" type="text" placeholder="Ex.: Ajustar layout do checkout" maxlength="120">
+
+      <label class="field-label" for="cardDesc">Descrição</label>
+      <textarea id="cardDesc" class="text-input textarea" placeholder="Detalhes da demanda…" rows="3" maxlength="2000"></textarea>
+
+      <label class="field-label" for="cardDue">Prazo (opcional)</label>
+      <input id="cardDue" class="text-input" type="date">
+
+      <div class="field-label">Cor</div>
+      <div id="colorSwatches" class="swatches"></div>
+
+      <div class="field-label checklist-label-row">
+        <span>Checklist</span>
+        <span id="checklistProgressText" class="checklist-progress-text">0/0</span>
+      </div>
+      <div class="checklist-progress-track">
+        <div id="checklistProgressBar" class="checklist-progress-bar" style="width:0%"></div>
+      </div>
+      <ul id="checklistItems" class="checklist-items"></ul>
+      <form id="checklistAddForm" class="checklist-add-form">
+        <input id="checklistNewItem" class="text-input" type="text" placeholder="Adicionar item ao checklist…" maxlength="200">
+        <button type="submit" class="btn-primary btn-small">Adicionar</button>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button id="btnDeleteCard" class="btn-danger">Excluir card</button>
+      <div class="modal-foot-right">
+        <button id="btnCancelCard" class="btn-ghost">Cancelar</button>
+        <button id="btnSaveCard" class="btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: prompt genérico (projeto / coluna) ===== -->
+<div id="promptModal" class="modal-overlay" hidden>
+  <div class="modal prompt-modal" role="dialog" aria-modal="true" aria-labelledby="promptModalTitle">
+    <div class="modal-head">
+      <h3 id="promptModalTitle">Novo</h3>
+      <button class="icon-btn" id="promptModalClose" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label" id="promptFieldLabel" for="promptInput">Nome</label>
+      <input id="promptInput" class="text-input" type="text" maxlength="80">
+      <div id="promptSwatchesWrap" hidden>
+        <div class="field-label">Cor do projeto</div>
+        <div id="promptSwatches" class="swatches"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button id="btnPromptDelete" class="btn-danger" hidden>Excluir</button>
+      <div class="modal-foot-right">
+        <button id="btnPromptCancel" class="btn-ghost">Cancelar</button>
+        <button id="btnPromptSave" class="btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STICKER TRAY ===== -->
+<div id="stickerTray" class="sticker-tray" hidden>
+  <div class="sticker-tray-head">
+    <span class="sticker-tray-title">FerMood</span>
+    <button id="closeStickerTray" class="icon-btn small" aria-label="Fechar figurinhas">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="sticker-tray-sub">Arraste (ou toque e depois toque no card) para marcar o status</div>
+  <div class="sticker-tray-items" id="stickerTrayItems"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- Firebase (compat SDK — funciona com script tag comum, sem precisar de módulos ES) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
