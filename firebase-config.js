@@ -25,10 +25,10 @@
 // ============================================================
 
 window.FIREBASE_CONFIG = {
-  apiKey: "COLE_AQUI_SUA_API_KEY",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxx"
+  apiKey: "AIzaSyBvyw_sH-5auC7Vjh2K4fvpmP_WK_TQ_Gw",
+  authDomain: "zenlist-7ef3f.firebaseapp.com",
+  projectId: "zenlist-7ef3f",
+  storageBucket: "zenlist-7ef3f.firebasestorage.app",
+  messagingSenderId: "852798192123",
+  appId: "1:852798192123:web:850916d9965b1e5676b35e"
 };
