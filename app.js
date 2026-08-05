@@ -281,6 +281,7 @@ function renderSidebar(){
       saveState();
       renderAll();
       closeMobileSidebar();
+      closeStickerTray();
     });
     item.addEventListener("keydown", function(ev){
       if (ev.key === "Enter" || ev.key === " ") item.click();
@@ -433,6 +434,7 @@ function renderCard(project, card){
       renderBoard();
       return;
     }
+    closeStickerTray();
     openCardModal(project, card.columnId, card.id);
   });
 
@@ -704,6 +706,7 @@ $("#btnDeleteCard").addEventListener("click", function(){
 var promptCtx = { type:null, project:null, columnId:null };
 
 function openProjectPromptNew(){
+  closeStickerTray();
   promptCtx = { type:"project-new" };
   $("#promptModalTitle").textContent = "Novo projeto";
   $("#promptFieldLabel").textContent = "Nome do projeto";
@@ -715,6 +718,7 @@ function openProjectPromptNew(){
   setTimeout(function(){ $("#promptInput").focus(); }, 30);
 }
 function openProjectPrompt(project){
+  closeStickerTray();
   promptCtx = { type:"project-edit", project:project };
   $("#promptModalTitle").textContent = "Editar projeto";
   $("#promptFieldLabel").textContent = "Nome do projeto";
@@ -726,6 +730,7 @@ function openProjectPrompt(project){
   setTimeout(function(){ $("#promptInput").focus(); }, 30);
 }
 function openColumnPrompt(project, columnId){
+  closeStickerTray();
   var col = columnId ? project.columns.find(function(c){ return c.id === columnId; }) : null;
   promptCtx = { type: col ? "column-edit" : "column-new", project:project, columnId: columnId };
   $("#promptModalTitle").textContent = col ? "Renomear coluna" : "Nova coluna";
@@ -806,11 +811,12 @@ function renderStickerTray(){
 $("#btnStickers").addEventListener("click", function(){
   $("#stickerTray").hidden = !$("#stickerTray").hidden;
 });
-$("#closeStickerTray").addEventListener("click", function(){
+function closeStickerTray(){
   $("#stickerTray").hidden = true;
   selectedStickerId = null;
   $all(".sticker-thumb").forEach(function(t){ t.classList.remove("selected"); });
-});
+}
+$("#closeStickerTray").addEventListener("click", closeStickerTray);
 
 /* =========================================================
    TOP-LEVEL BUTTONS
