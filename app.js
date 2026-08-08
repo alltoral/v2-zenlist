@@ -63,6 +63,17 @@ function isOverdue(iso){
   var d = new Date(iso + "T00:00:00");
   return d < today;
 }
+function todayISO(){
+  var d = new Date();
+  var mm = String(d.getMonth()+1).padStart(2,"0");
+  var dd = String(d.getDate()).padStart(2,"0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function formatLongDate(iso){
+  var d = new Date(iso + "T00:00:00");
+  var s = d.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 /* =========================================================
    STATE (sincronizado via Firebase Firestore)
@@ -70,6 +81,7 @@ function isOverdue(iso){
 var state = { projects: [], activeProjectId: null };
 var currentUid = null;
 var unsubscribeSnapshot = null;
+var dueTodayNotified = false;
 var auth = null;
 var db = null;
 
@@ -113,6 +125,7 @@ function saveState(){
 
 function setupFirestoreSync(uid){
   if (unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  dueTodayNotified = false;
   setSyncStatus("syncing");
   unsubscribeSnapshot = db.collection("zenlist_users").doc(uid).onSnapshot(function(doc){
     if (doc.exists && doc.data() && doc.data().data){
@@ -120,12 +133,34 @@ function setupFirestoreSync(uid){
     } else {
       state = { projects: [], activeProjectId: null };
     }
+    var needsSave = ensureDailyChecklist();
     renderAll();
+    renderDailyPanel();
     setSyncStatus(doc.metadata.fromCache ? "offline" : "synced");
+    if (needsSave) saveState();
+    if (!dueTodayNotified){
+      var shown = showDueTodayNotification();
+      if (shown) dueTodayNotified = true;
+    }
   }, function(err){
     console.error("Erro na sincronização", err);
     setSyncStatus("offline");
   });
+}
+
+function ensureDailyChecklist(){
+  var today = todayISO();
+  if (!state.daily || typeof state.daily !== "object"){
+    state.daily = { date: today, items: [] };
+    return true;
+  }
+  if (!Array.isArray(state.daily.items)) state.daily.items = [];
+  if (state.daily.date !== today){
+    state.daily.items.forEach(function(i){ i.done = false; });
+    state.daily.date = today;
+    return true;
+  }
+  return false;
 }
 
 function setSyncStatus(status){
@@ -672,6 +707,108 @@ $("#checklistAddForm").addEventListener("submit", function(ev){
   input.focus();
 });
 
+/* =========================================================
+   DAILY CHECKLIST (barra vertical verde neon)
+   ========================================================= */
+function renderDailyPanel(){
+  $("#dailyDate").textContent = formatLongDate(todayISO());
+  var ul = $("#dailyItems");
+  ul.innerHTML = "";
+  var items = (state.daily && state.daily.items) || [];
+  if (!items.length){
+    ul.appendChild(el("li", "daily-empty", "Nenhuma tarefa ainda. Adicione algo pra hoje."));
+    return;
+  }
+  items.forEach(function(item){
+    var li = el("li", "daily-item" + (item.done ? " is-done" : ""));
+    var circle = el("span", "check-circle" + (item.done ? " done" : ""));
+    circle.setAttribute("role", "checkbox");
+    circle.setAttribute("aria-checked", String(!!item.done));
+    circle.tabIndex = 0;
+    circle.addEventListener("click", function(){
+      item.done = !item.done;
+      saveState();
+      renderDailyPanel();
+    });
+    circle.addEventListener("keydown", function(ev){ if (ev.key === "Enter" || ev.key === " ") circle.click(); });
+
+    var text = el("span", "daily-item-text", escapeHtml(item.text));
+    var del = el("span", "daily-item-del");
+    del.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    del.addEventListener("click", function(){
+      state.daily.items = state.daily.items.filter(function(i){ return i !== item; });
+      saveState();
+      renderDailyPanel();
+    });
+
+    li.appendChild(circle); li.appendChild(text); li.appendChild(del);
+    ul.appendChild(li);
+  });
+}
+$("#dailyAddForm").addEventListener("submit", function(ev){
+  ev.preventDefault();
+  var input = $("#dailyNewItem");
+  var text = input.value.trim();
+  if (!text) return;
+  if (!state.daily) state.daily = { date: todayISO(), items: [] };
+  state.daily.items.push({ id: uid(), text: text, done: false });
+  saveState();
+  input.value = "";
+  renderDailyPanel();
+  input.focus();
+});
+
+var DAILY_OPEN_KEY = "zenlist_daily_open";
+function setDailyOpen(open){
+  document.body.classList.toggle("daily-open", open);
+  try{ localStorage.setItem(DAILY_OPEN_KEY, open ? "1" : "0"); }catch(e){}
+  $("#dailyScrim").hidden = !open;
+}
+$("#btnToggleDaily").addEventListener("click", function(){
+  setDailyOpen(!document.body.classList.contains("daily-open"));
+});
+$("#btnCloseDaily").addEventListener("click", function(){ setDailyOpen(false); });
+$("#dailyScrim").addEventListener("click", function(){ setDailyOpen(false); });
+(function initDailyOpen(){
+  var saved = "0";
+  try{ saved = localStorage.getItem(DAILY_OPEN_KEY) || "0"; }catch(e){}
+  setDailyOpen(saved === "1");
+})();
+
+/* =========================================================
+   POPUP: ENTREGAS DE HOJE
+   ========================================================= */
+function showDueTodayNotification(){
+  var today = todayISO();
+  var matches = [];
+  state.projects.forEach(function(p){
+    p.cards.forEach(function(c){
+      if (c.due === today) matches.push({ card:c, project:p });
+    });
+  });
+  var popup = $("#dueTodayPopup");
+  if (!matches.length){ popup.hidden = true; return false; }
+
+  var list = $("#dueTodayList");
+  list.innerHTML = "";
+  matches.forEach(function(m){
+    var li = el("li", "due-today-item");
+    li.appendChild(el("span", "due-today-item-title", escapeHtml(m.card.title)));
+    li.appendChild(el("span", "due-today-item-project", escapeHtml(m.project.name)));
+    li.addEventListener("click", function(){
+      state.activeProjectId = m.project.id;
+      saveState();
+      renderAll();
+      popup.hidden = true;
+      openCardModal(m.project, m.card.columnId, m.card.id);
+    });
+    list.appendChild(li);
+  });
+  popup.hidden = false;
+  return true;
+}
+$("#btnCloseDueToday").addEventListener("click", function(){ $("#dueTodayPopup").hidden = true; });
+
 $("#btnSaveCard").addEventListener("click", function(){
   var title = $("#cardTitle").value.trim();
   if (!title){ toast("Dê um título ao card."); $("#cardTitle").focus(); return; }
@@ -859,39 +996,6 @@ $("#btnExpandSidebar").addEventListener("click", function(){ setSidebarCollapsed
   try{ saved = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) || "0"; }catch(e){}
   setSidebarCollapsed(saved === "1");
 })();
-
-/* Export / Import backup */
-$("#btnExport").addEventListener("click", function(){
-  var blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "zenlist-backup-" + new Date().toISOString().slice(0,10) + ".json";
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  toast("Backup exportado.");
-});
-$("#btnImport").addEventListener("click", function(){ $("#importFile").click(); });
-$("#importFile").addEventListener("change", function(ev){
-  var file = ev.target.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(){
-    try{
-      var parsed = JSON.parse(reader.result);
-      if (!parsed || !Array.isArray(parsed.projects)) throw new Error("Formato inválido");
-      if (!confirm("Importar substituirá os dados atuais. Continuar?")) return;
-      state = parsed;
-      saveState();
-      renderAll();
-      toast("Backup importado com sucesso.");
-    }catch(e){
-      toast("Arquivo inválido.");
-    }
-  };
-  reader.readAsText(file);
-  ev.target.value = "";
-});
 
 /* Escape closes modals */
 document.addEventListener("keydown", function(ev){
