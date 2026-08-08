@@ -67,7 +67,7 @@
       <button id="btnStickers" class="icon-btn" title="FerMood" aria-label="FerMood">
         <span class="icon-mask icon-mask-cat" aria-hidden="true"></span>
       </button>
-      <button id="btnToggleDaily" class="icon-btn only-mobile" title="Checklist diário" aria-label="Checklist diário">
+      <button id="btnToggleDaily" class="icon-btn only-daily-mobile" title="Checklist diário" aria-label="Checklist diário">
         <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button id="btnAccount" class="icon-btn" title="Conta" aria-label="Conta">
@@ -120,11 +120,10 @@
       <div class="daily-head">
         <div class="daily-head-top">
           <span id="dailyDate" class="daily-date">—</span>
-          <button id="btnCloseDaily" class="icon-btn small only-mobile" aria-label="Fechar checklist diário">
+          <button id="btnCloseDaily" class="icon-btn small only-daily-mobile" aria-label="Fechar checklist diário">
             <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
-        <p class="daily-phrase">vai dar boas, você vai dar conta do que der</p>
       </div>
       <ul id="dailyItems" class="daily-items"></ul>
       <form id="dailyAddForm" class="daily-add-form">
@@ -134,7 +133,7 @@
         </button>
       </form>
     </aside>
-    <div id="dailyScrim" class="sidebar-scrim only-mobile" hidden></div>
+    <div id="dailyScrim" class="sidebar-scrim only-daily-mobile" hidden></div>
   </div>
 </div>
 
