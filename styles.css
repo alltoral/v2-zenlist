@@ -224,18 +224,12 @@ body.sidebar-collapsed .sidebar{
    DAILY CHECKLIST (barra vertical verde neon)
    ========================================================= */
 .daily-panel{
-  width:0; min-width:0; flex:0 0 auto;
+  width:290px; min-width:290px; flex:0 0 auto;
   background: var(--accent-bright);
-  border-left:1px solid transparent;
+  border-left:1px solid rgba(0,0,0,.08);
   display:flex; flex-direction:column;
-  overflow:hidden;
-  opacity:0;
-  transition: width .18s ease, opacity .12s ease;
+  overflow-y:auto;
   z-index:24;
-}
-body.daily-open .daily-panel{
-  width:290px; opacity:1; overflow-y:auto;
-  border-left-color: rgba(0,0,0,.08);
 }
 .daily-head{ padding:18px 18px 14px; flex:0 0 auto; }
 .daily-head-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -650,7 +644,7 @@ body.daily-open .daily-panel{
 
   .daily-panel{
     position:fixed; top:var(--topbar-h); right:0; bottom:0;
-    width:88vw; max-width:340px;
+    width:88vw; max-width:340px; min-width:0;
     transform: translateX(100%);
     transition: transform .22s ease;
     box-shadow: var(--shadow-pop);
