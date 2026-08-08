@@ -220,6 +220,64 @@ body.sidebar-collapsed .sidebar{
   position:relative; z-index:1;
 }
 
+/* =========================================================
+   DAILY CHECKLIST (barra vertical verde neon)
+   ========================================================= */
+.daily-panel{
+  width:0; min-width:0; flex:0 0 auto;
+  background: var(--accent-bright);
+  border-left:1px solid transparent;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  opacity:0;
+  transition: width .18s ease, opacity .12s ease;
+  z-index:24;
+}
+body.daily-open .daily-panel{
+  width:290px; opacity:1; overflow-y:auto;
+  border-left-color: rgba(0,0,0,.08);
+}
+.daily-head{ padding:18px 18px 14px; flex:0 0 auto; }
+.daily-head-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.daily-date{ font-family: var(--font-mono); font-weight:700; font-size:13px; color:#12210a; letter-spacing:.02em; }
+.daily-head .icon-btn{ color:#12210a; }
+.daily-head .icon-btn:hover{ background: rgba(0,0,0,.08); }
+.daily-phrase{
+  margin:10px 0 0; font-size:15px; font-weight:700; line-height:1.35;
+  color:#12210a;
+}
+.daily-items{
+  list-style:none; margin:0; padding:0 14px 8px;
+  display:flex; flex-direction:column; gap:8px;
+  flex:1;
+}
+.daily-item{
+  display:flex; align-items:center; gap:9px;
+  background:#fff; border-radius:12px; padding:10px 10px;
+  box-shadow:0 1px 2px rgba(20,30,10,.12);
+}
+.daily-item.is-done{ opacity:.6; }
+.daily-item.is-done .daily-item-text{ text-decoration:line-through; color:var(--ink-faint); }
+.daily-item-text{ flex:1; font-size:13.5px; color:var(--ink); word-break:break-word; }
+.daily-item-del{
+  width:22px; height:22px; border-radius:6px; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--ink-faint); opacity:0; cursor:pointer;
+}
+.daily-item:hover .daily-item-del{ opacity:1; }
+.daily-item-del:hover{ background:var(--danger-tint); color:var(--danger); }
+.daily-item-del svg{ width:12px; height:12px; }
+.daily-empty{ margin:6px 0; font-size:13px; color:#1c3010; opacity:.75; }
+
+.daily-add-form{
+  display:flex; gap:8px; padding:10px 14px 16px; flex:0 0 auto;
+}
+.daily-add-form .text-input{
+  flex:1; background:#fff; border-color: rgba(0,0,0,.12);
+}
+.daily-add-btn{ background:#12210a; color:#fff; flex:0 0 auto; }
+.daily-add-btn:hover{ background:#1c3410; }
+
 .column{
   background: var(--surface-2);
   border:1px solid var(--border);
@@ -525,6 +583,38 @@ body.sidebar-collapsed .sidebar{
 }
 
 /* =========================================================
+   DUE TODAY POPUP
+   ========================================================= */
+.due-today-popup{
+  position:fixed; left:18px; bottom:18px;
+  width:290px; max-width:88vw;
+  background:#fff; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  z-index:70;
+  overflow:hidden;
+}
+.due-today-head{
+  display:flex; align-items:center; gap:8px;
+  padding:12px 8px 12px 14px;
+  background: var(--accent-bright); color:#12210a;
+  font-weight:700; font-size:13.5px;
+}
+.due-today-head span{ flex:1; }
+.due-today-head .icon-btn{ color:#12210a; width:26px; height:26px; }
+.due-today-head .icon-btn:hover{ background: rgba(0,0,0,.08); }
+.due-today-list{
+  list-style:none; margin:0; padding:8px; max-height:220px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:4px;
+}
+.due-today-item{
+  padding:8px 9px; border-radius:10px; cursor:pointer;
+  display:flex; flex-direction:column; gap:1px;
+}
+.due-today-item:hover{ background: var(--surface-2); }
+.due-today-item-title{ font-size:13.5px; font-weight:600; color:var(--ink); }
+.due-today-item-project{ font-size:11.5px; color:var(--ink-soft); font-family:var(--font-mono); }
+
+/* =========================================================
    TOAST
    ========================================================= */
 .toast{
@@ -557,6 +647,16 @@ body.sidebar-collapsed .sidebar{
   .board{ padding:12px; scroll-snap-type: x mandatory; }
   .column{ width:82vw; flex:0 0 82vw; }
   .add-column{ flex:0 0 70vw; width:70vw; }
+
+  .daily-panel{
+    position:fixed; top:var(--topbar-h); right:0; bottom:0;
+    width:88vw; max-width:340px;
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    box-shadow: var(--shadow-pop);
+    opacity:1; overflow-y:auto;
+  }
+  body.daily-open .daily-panel{ transform:none; width:88vw; max-width:340px; }
 }
 
 @media (max-width:520px){
