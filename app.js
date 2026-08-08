@@ -775,6 +775,25 @@ $("#dailyScrim").addEventListener("click", function(){ setDailyOpen(false); });
   setDailyOpen(saved === "1");
 })();
 
+/* Desktop: recolher a coluna do checklist diário (padrão: exibida) */
+var DAILY_COLLAPSE_KEY = "zenlist_daily_collapsed";
+function setDailyCollapsed(collapsed){
+  document.body.classList.toggle("daily-collapsed", collapsed);
+  try{ localStorage.setItem(DAILY_COLLAPSE_KEY, collapsed ? "1" : "0"); }catch(e){}
+  $("#btnCollapseDaily").title = collapsed ? "Mostrar checklist" : "Ocultar checklist";
+  $("#btnCollapseDaily").setAttribute("aria-label", collapsed ? "Mostrar checklist" : "Ocultar checklist");
+  $("#btnExpandDaily").hidden = !collapsed;
+}
+$("#btnCollapseDaily").addEventListener("click", function(){
+  setDailyCollapsed(!document.body.classList.contains("daily-collapsed"));
+});
+$("#btnExpandDaily").addEventListener("click", function(){ setDailyCollapsed(false); });
+(function initDailyCollapse(){
+  var saved = "0";
+  try{ saved = localStorage.getItem(DAILY_COLLAPSE_KEY) || "0"; }catch(e){}
+  setDailyCollapsed(saved === "1");
+})();
+
 /* =========================================================
    POPUP: ENTREGAS DE HOJE
    ========================================================= */
@@ -786,8 +805,9 @@ function showDueTodayNotification(){
       if (c.due === today) matches.push({ card:c, project:p });
     });
   });
+  dueTodayMatches = matches;
   var popup = $("#dueTodayPopup");
-  if (!matches.length){ popup.hidden = true; return false; }
+  if (!matches.length){ popup.hidden = true; $("#dueTodayMini").hidden = true; return false; }
 
   var list = $("#dueTodayList");
   list.innerHTML = "";
@@ -800,14 +820,24 @@ function showDueTodayNotification(){
       saveState();
       renderAll();
       popup.hidden = true;
+      $("#dueTodayMini").hidden = true;
       openCardModal(m.project, m.card.columnId, m.card.id);
     });
     list.appendChild(li);
   });
+  $("#dueTodayMiniLabel").textContent = matches.length === 1 ? "1 tarefa para hoje" : matches.length + " tarefas para hoje";
   popup.hidden = false;
   return true;
 }
-$("#btnCloseDueToday").addEventListener("click", function(){ $("#dueTodayPopup").hidden = true; });
+var dueTodayMatches = [];
+$("#btnMinimizeDueToday").addEventListener("click", function(){
+  $("#dueTodayPopup").hidden = true;
+  $("#dueTodayMini").hidden = false;
+});
+$("#dueTodayMini").addEventListener("click", function(){
+  $("#dueTodayMini").hidden = true;
+  $("#dueTodayPopup").hidden = false;
+});
 
 $("#btnSaveCard").addEventListener("click", function(){
   var title = $("#cardTitle").value.trim();
