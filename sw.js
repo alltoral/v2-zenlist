@@ -1,4 +1,4 @@
-const CACHE_NAME = "zenlist-cache-v2";
+const CACHE_NAME = "zenlist-cache-v3";
 
 // Arquivos de código: sempre busca a versão mais nova da rede primeiro
 // (evita servir uma versão antiga em cache depois que você edita o código).
@@ -59,7 +59,7 @@ self.addEventListener("fetch", (event) => {
 
   if (networkFirst) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: "no-store" })
         .then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
