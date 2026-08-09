@@ -156,7 +156,7 @@ function ensureDailyChecklist(){
   }
   if (!Array.isArray(state.daily.items)) state.daily.items = [];
   if (state.daily.date !== today){
-    state.daily.items.forEach(function(i){ i.done = false; });
+    state.daily.items = state.daily.items.filter(function(i){ return !i.done; });
     state.daily.date = today;
     return true;
   }
@@ -413,6 +413,11 @@ function renderCard(project, card){
   c.dataset.color = card.color;
   c.draggable = true;
 
+  var col = project.columns.find(function(cl){ return cl.id === card.columnId; });
+  if (col && col.name && col.name.toLowerCase().indexOf("conclu") !== -1){
+    c.classList.add("card-done");
+  }
+
   var cardStickers = card.stickers || [];
   if (cardStickers.length){
     c.classList.add("has-stickers");
@@ -547,9 +552,15 @@ function syncCardOrderFromDOM(project){
   var newCards = [];
   $all(".column-cards").forEach(function(container){
     var colId = container.dataset.columnId;
+    var col = project.columns.find(function(cl){ return cl.id === colId; });
+    var isDoneCol = !!(col && col.name && col.name.toLowerCase().indexOf("conclu") !== -1);
     $all(".card", container).forEach(function(cardEl){
       var c = project.cards.find(function(c){ return c.id === cardEl.dataset.cardId; });
-      if (c){ c.columnId = colId; newCards.push(c); }
+      if (c){
+        c.columnId = colId;
+        newCards.push(c);
+        cardEl.classList.toggle("card-done", isDoneCol);
+      }
     });
   });
   // preserve any cards not currently rendered (shouldn't happen, but safe)
