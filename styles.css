@@ -433,6 +433,19 @@ body.sidebar-collapsed .sidebar{
 }
 .card-progress-bar{ height:100%; background: var(--card-tab, var(--accent)); border-radius:4px; }
 
+/* Card na coluna "Concluído": esmaecido e em verde escuro */
+.card.card-done{
+  background: var(--brand-dark);
+  opacity:.68;
+}
+.card.card-done::before{ background: rgba(255,255,255,.35); }
+.card.card-done:hover{ opacity:.85; }
+.card.card-done .card-title{ color:#fff; }
+.card.card-done .card-desc{ color: rgba(255,255,255,.72); }
+.card.card-done .card-checklist-pill{ color: rgba(255,255,255,.8); }
+.card.card-done .card-progress-track{ background: rgba(255,255,255,.28); }
+.card.card-done .card-progress-bar{ background: rgba(255,255,255,.85); }
+
 /* =========================================================
    CHECKLIST (in modal)
    ========================================================= */
