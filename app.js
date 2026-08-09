@@ -795,6 +795,142 @@ $("#btnExpandDaily").addEventListener("click", function(){ setDailyCollapsed(fal
 })();
 
 /* =========================================================
+   AGENDA (Google Calendar — leitura dos compromissos de hoje)
+   ========================================================= */
+var GOOGLE_CONNECTED_KEY = "zenlist_google_connected";
+var googleAccessToken = null;
+var googleTokenClient = null;
+
+function initGoogleTokenClient(){
+  if (googleTokenClient) return true;
+  if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return false;
+  if (!window.GOOGLE_CLIENT_ID || window.GOOGLE_CLIENT_ID.indexOf("COLE_AQUI") !== -1) return false;
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: window.GOOGLE_CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/calendar.readonly",
+    callback: function(resp){
+      if (resp && resp.access_token){
+        googleAccessToken = resp.access_token;
+        try{ localStorage.setItem(GOOGLE_CONNECTED_KEY, "1"); }catch(e){}
+        setAgendaConnected(true);
+        fetchGoogleAgenda();
+      } else {
+        showAgendaError("Não foi possível conectar à Google Agenda.");
+      }
+    },
+    error_callback: function(){
+      $("#agendaLoading").hidden = true;
+    }
+  });
+  return true;
+}
+
+function connectGoogleCalendar(){
+  if (!initGoogleTokenClient()){
+    showAgendaError("Google ainda não carregou, ou o google-config.js não foi configurado com o Client ID.");
+    return;
+  }
+  googleTokenClient.requestAccessToken();
+}
+$("#btnConnectGoogle").addEventListener("click", connectGoogleCalendar);
+$("#btnAgendaRefresh").addEventListener("click", function(){ fetchGoogleAgenda(); });
+$("#btnDisconnectGoogle").addEventListener("click", function(){
+  googleAccessToken = null;
+  try{ localStorage.removeItem(GOOGLE_CONNECTED_KEY); }catch(e){}
+  setAgendaConnected(false);
+});
+
+function setAgendaConnected(connected){
+  $("#btnConnectGoogle").hidden = connected;
+  $("#btnAgendaRefresh").hidden = !connected;
+  $("#btnDisconnectGoogle").hidden = !connected;
+  if (!connected){
+    $("#agendaEvents").hidden = true;
+    $("#agendaEmpty").hidden = true;
+    $("#agendaError").hidden = true;
+    $("#agendaLoading").hidden = true;
+  }
+}
+function showAgendaError(msg){
+  $("#agendaLoading").hidden = true;
+  $("#agendaEvents").hidden = true;
+  $("#agendaEmpty").hidden = true;
+  var box = $("#agendaError");
+  box.textContent = msg;
+  box.hidden = false;
+}
+function fetchGoogleAgenda(){
+  if (!googleAccessToken) return;
+  $("#agendaError").hidden = true;
+  $("#agendaEmpty").hidden = true;
+  $("#agendaEvents").hidden = true;
+  $("#agendaLoading").hidden = false;
+
+  var now = new Date();
+  var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  var endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  var url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    + "?timeMin=" + encodeURIComponent(startOfDay.toISOString())
+    + "&timeMax=" + encodeURIComponent(endOfDay.toISOString())
+    + "&singleEvents=true&orderBy=startTime&maxResults=15";
+
+  fetch(url, { headers: { "Authorization": "Bearer " + googleAccessToken } })
+    .then(function(res){
+      if (res.status === 401){ googleAccessToken = null; throw new Error("token_expired"); }
+      if (!res.ok) throw new Error("http_" + res.status);
+      return res.json();
+    })
+    .then(function(data){ renderAgendaEvents(data.items || []); })
+    .catch(function(err){
+      if (err.message === "token_expired"){
+        showAgendaError("Sessão do Google expirou. Clique para conectar de novo.");
+        setAgendaConnected(false);
+      } else {
+        showAgendaError("Não foi possível carregar a agenda agora.");
+      }
+    });
+}
+function renderAgendaEvents(items){
+  $("#agendaLoading").hidden = true;
+  if (!items.length){
+    $("#agendaEmpty").hidden = false;
+    $("#agendaEvents").hidden = true;
+    return;
+  }
+  var ul = $("#agendaEvents");
+  ul.innerHTML = "";
+  items.forEach(function(ev){
+    var li = el("li", "agenda-event");
+    var timeStr = "Dia todo";
+    if (ev.start && ev.start.dateTime){
+      timeStr = new Date(ev.start.dateTime).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" });
+    }
+    li.appendChild(el("span", "agenda-event-time", timeStr));
+    li.appendChild(el("span", "agenda-event-title", escapeHtml(ev.summary || "(sem título)")));
+    ul.appendChild(li);
+  });
+  $("#agendaEmpty").hidden = true;
+  ul.hidden = false;
+}
+(function tryGoogleSilentReconnect(){
+  var wasConnected = "0";
+  try{ wasConnected = localStorage.getItem(GOOGLE_CONNECTED_KEY) || "0"; }catch(e){}
+  setAgendaConnected(false);
+  if (wasConnected !== "1") return;
+  var tries = 0;
+  (function check(){
+    if (window.google && window.google.accounts && window.google.accounts.oauth2){
+      if (initGoogleTokenClient()){
+        googleTokenClient.requestAccessToken({ prompt: "" });
+      }
+      return;
+    }
+    tries++;
+    if (tries < 40) setTimeout(check, 250);
+  })();
+})();
+
+/* =========================================================
    POPUP: ENTREGAS DE HOJE
    ========================================================= */
 function showDueTodayNotification(){
