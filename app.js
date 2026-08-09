@@ -803,8 +803,8 @@ var googleTokenClient = null;
 
 function initGoogleTokenClient(){
   if (googleTokenClient) return true;
-  if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return false;
-  if (!window.GOOGLE_CLIENT_ID || window.GOOGLE_CLIENT_ID.indexOf("COLE_AQUI") !== -1) return false;
+  if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return "not_loaded";
+  if (!window.GOOGLE_CLIENT_ID || window.GOOGLE_CLIENT_ID.indexOf("COLE_AQUI") !== -1) return "not_configured";
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: window.GOOGLE_CLIENT_ID,
     scope: "https://www.googleapis.com/auth/calendar.readonly",
@@ -826,8 +826,13 @@ function initGoogleTokenClient(){
 }
 
 function connectGoogleCalendar(){
-  if (!initGoogleTokenClient()){
-    showAgendaError("Google ainda não carregou, ou o google-config.js não foi configurado com o Client ID.");
+  var result = initGoogleTokenClient();
+  if (result === "not_loaded"){
+    showAgendaError("O script do Google não carregou. Pode ser bloqueador de anúncios/rastreamento, extensão de privacidade, ou antivírus bloqueando accounts.google.com. Recarregue a página ou teste em outro navegador.");
+    return;
+  }
+  if (result === "not_configured"){
+    showAgendaError("google-config.js ainda está com o Client ID de exemplo. Confirme se o arquivo publicado no seu site já tem o Client ID real (veja o passo abaixo).");
     return;
   }
   googleTokenClient.requestAccessToken();
@@ -920,7 +925,7 @@ function renderAgendaEvents(items){
   var tries = 0;
   (function check(){
     if (window.google && window.google.accounts && window.google.accounts.oauth2){
-      if (initGoogleTokenClient()){
+      if (initGoogleTokenClient() === true){
         googleTokenClient.requestAccessToken({ prompt: "" });
       }
       return;
