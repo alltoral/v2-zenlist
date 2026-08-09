@@ -25,4 +25,4 @@
 //    ".apps.googleusercontent.com") e cole abaixo.
 // ============================================================
 
-window.GOOGLE_CLIENT_ID = 224315901707-9nd6qi0g7hp192hfka73lpqiioiebvnp.apps.googleusercontent.com";
+window.GOOGLE_CLIENT_ID = "224315901707-9nd6qi0g7hp192hfka73lpqiioiebvnp.apps.googleusercontent.com";
