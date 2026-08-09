@@ -8,7 +8,8 @@ const NETWORK_FIRST_ASSETS = [
   "./styles.css",
   "./app.js",
   "./manifest.json",
-  "./firebase-config.js"
+  "./firebase-config.js",
+  "./google-config.js"
 ];
 
 // Ícones e imagens: raramente mudam, então cache-primeiro é seguro e mais rápido.
