@@ -100,6 +100,7 @@ function initFirebase(){
     db = firebase.firestore();
     db.enablePersistence({ synchronizeTabs: true }).catch(function(err){
       console.warn("Persistência offline não disponível:", err.code);
+      toast("Este navegador/aba não conseguiu ativar o modo offline (código: " + err.code + "). Mantenha a internet ligada ao usar o ZenList aqui.");
     });
     return true;
   }catch(e){
@@ -108,43 +109,88 @@ function initFirebase(){
   }
 }
 
+/* ----- Backup local de segurança (protege contra leituras vazias indevidas) ----- */
+var LOCAL_BACKUP_KEY = "zenlist_local_backup";
+function saveLocalBackup(uid, st){
+  try{
+    localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify({ uid: uid, state: st, savedAt: Date.now() }));
+  }catch(e){}
+}
+function getLocalBackup(uid){
+  try{
+    var raw = localStorage.getItem(LOCAL_BACKUP_KEY);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.uid === uid) return parsed;
+  }catch(e){}
+  return null;
+}
+function stateLooksEmpty(st){
+  return !st || !Array.isArray(st.projects) || st.projects.length === 0;
+}
+
 function saveState(){
   if (!currentUid || !db) return;
   setSyncStatus("syncing");
+  saveLocalBackup(currentUid, state);
   db.collection("zenlist_users").doc(currentUid).set({
     data: state,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).then(function(){
     setSyncStatus("synced");
   }).catch(function(err){
-    console.error("Falha ao salvar no Firestore", err);
+    console.error("Falha ao salvar no Firestore", err.code, err.message);
     setSyncStatus("offline");
-    toast("Sem conexão agora — suas mudanças serão sincronizadas quando a internet voltar.");
+    if (navigator.onLine === false){
+      toast("Sem conexão agora — suas mudanças ficam guardadas neste aparelho e sincronizam quando a internet voltar.");
+    } else {
+      toast("Não foi possível salvar agora (" + (err.code || "erro") + "). Seus dados continuam guardados neste aparelho e vamos tentar de novo.");
+    }
   });
 }
+window.addEventListener("online", function(){
+  if (currentUid){ setSyncStatus("syncing"); saveState(); }
+});
+window.addEventListener("offline", function(){ setSyncStatus("offline"); });
 
 function setupFirestoreSync(uid){
   if (unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   dueTodayNotified = false;
   setSyncStatus("syncing");
   unsubscribeSnapshot = db.collection("zenlist_users").doc(uid).onSnapshot(function(doc){
-    if (doc.exists && doc.data() && doc.data().data){
-      state = doc.data().data;
+    var incoming = (doc.exists && doc.data() && doc.data().data) ? doc.data().data : null;
+
+    if (incoming && !stateLooksEmpty(incoming)){
+      state = incoming;
+      saveLocalBackup(uid, state);
     } else {
-      state = { projects: [], activeProjectId: null };
+      var backup = getLocalBackup(uid);
+      if (backup && !stateLooksEmpty(backup.state)){
+        console.warn("O Firestore retornou vazio, mas há um backup local com dados — mantendo os dados locais e tentando salvar de novo.");
+        state = backup.state;
+        var needsSaveRecover = ensureDailyChecklist();
+        renderAll();
+        renderDailyPanel();
+        setSyncStatus("synced");
+        saveState();
+        return;
+      }
+      state = incoming || { projects: [], activeProjectId: null };
     }
+
     var needsSave = ensureDailyChecklist();
     renderAll();
     renderDailyPanel();
-    setSyncStatus(doc.metadata.fromCache ? "offline" : "synced");
+    setSyncStatus(navigator.onLine === false ? "offline" : "synced");
     if (needsSave) saveState();
     if (!dueTodayNotified){
       var shown = showDueTodayNotification();
       if (shown) dueTodayNotified = true;
     }
   }, function(err){
-    console.error("Erro na sincronização", err);
+    console.error("Erro na sincronização", err.code, err.message);
     setSyncStatus("offline");
+    toast("Erro de sincronização (" + (err.code || "desconhecido") + "). Seus dados continuam guardados neste aparelho.");
   });
 }
 
