@@ -129,22 +129,27 @@ function stateLooksEmpty(st){
   return !st || !Array.isArray(st.projects) || st.projects.length === 0;
 }
 
+var pendingWriteCount = 0;
 function saveState(){
   if (!currentUid || !db) return;
   setSyncStatus("syncing");
   saveLocalBackup(currentUid, state);
+  pendingWriteCount++;
   db.collection("zenlist_users").doc(currentUid).set({
     data: state,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).then(function(){
+    pendingWriteCount = Math.max(0, pendingWriteCount - 1);
     setSyncStatus("synced");
   }).catch(function(err){
+    pendingWriteCount = Math.max(0, pendingWriteCount - 1);
     console.error("Falha ao salvar no Firestore", err.code, err.message);
     setSyncStatus("offline");
     if (navigator.onLine === false){
       toast("Sem conexão agora — suas mudanças ficam guardadas neste aparelho e sincronizam quando a internet voltar.");
     } else {
       toast("Não foi possível salvar agora (" + (err.code || "erro") + "). Seus dados continuam guardados neste aparelho e vamos tentar de novo.");
+      setTimeout(function(){ if (currentUid) saveState(); }, 5000);
     }
   });
 }
@@ -152,6 +157,13 @@ window.addEventListener("online", function(){
   if (currentUid){ setSyncStatus("syncing"); saveState(); }
 });
 window.addEventListener("offline", function(){ setSyncStatus("offline"); });
+window.addEventListener("beforeunload", function(ev){
+  if (pendingWriteCount > 0){
+    ev.preventDefault();
+    ev.returnValue = "Ainda estamos salvando suas mudanças. Se sair agora, elas podem se perder.";
+    return ev.returnValue;
+  }
+});
 
 function setupFirestoreSync(uid){
   if (unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
